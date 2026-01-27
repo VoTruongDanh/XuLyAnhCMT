@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Irrelevant Image Checker - Test UI</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .box {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            flex: 1;
+            min-width: 320px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Upload Zone Styles */
+        .upload-zone {
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            background: #f8f9fa;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: #007bff;
+            background-color: #eef7ff;
+        }
+
+        .upload-zone p {
+            margin: 10px 0 0;
+            color: #6c757d;
+        }
+
+        .upload-icon {
+            font-size: 40px;
+            color: #a0aec0;
+            margin-bottom: 10px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .preview-container {
+            margin-top: 20px;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f3f5;
+            border-radius: 8px;
+            overflow: hidden;
+            display: none;
+            /* Hidden initially */
+        }
+
+        .preview-img {
+            max-width: 100%;
+            max-height: 400px;
+            display: block;
+        }
+
+        /* Results Styles */
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            font-size: 13px;
+            font-family: 'Consolas', monospace;
+            margin-top: 0;
+        }
+
+        .status {
+            font-weight: 700;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            padding: 10px;
+            border-radius: 6px;
+            display: inline-block;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .status.ALLOW {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.SOFT_BLOCK {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .status.HARD_BLOCK {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Buttons */
+        .btn-check {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 20px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .btn-check:hover {
+            background: #0056b3;
+        }
+
+        .btn-check:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+        }
+
+        .time {
+            font-size: 0.85em;
+            color: #718096;
+            margin-top: 8px;
+            text-align: right;
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid #e2e8f0;
+            margin: 15px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: bold;
+            background: #eee;
+            color: #555;
+            margin-right: 5px;
+        }
+
+        /* Loader */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Irrelevant Image Checker</h1>
+
+    <div class="container">
+        <!-- Input Section -->
+        <div class="box">
+            <h3>Upload Image</h3>
+            <p style="font-size: 0.9em; color: #666; margin-top: -10px; margin-bottom: 20px;">
+                Drag & Drop, Paste (Ctrl+V), or Click below
+            </p>
+
+            <div class="upload-zone" id="dropZone">
+                <div class="upload-icon">Upload</div>
+                <p><strong>Click to browse</strong><br>or drop file here</p>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+
+            <!-- Advanced Settings -->
+            <details style="margin-top: 15px; border: 1px solid #ddd; padding: 10px; border-radius: 8px;">
+                <summary style="cursor: pointer; font-weight: bold;">⚙️ Advanced Thresholds (Tùy chỉnh ngưỡng)</summary>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+
+                    <!-- Synthetic Threshold -->
+                    <div class="setting-item">
+                        <label title="Base threshold for flatness. Lower = Stricter. Default: 0.7">Synthetic
+                            Threshold:</label>
+                        <input type="number" id="synthetic-thresh" step="0.05" value="0.70">
+                    </div>
+
+                    <!-- Entropy Threshold -->
+                    <div class="setting-item">
+                        <label title="Entropy needed to be considered 'Physically Real'. Default: 7.0">Realism
+                            Entropy:</label>
+                        <input type="number" id="entropy-thresh" step="0.1" value="7.0">
+                    </div>
+
+                </div>
+                <p style="font-size: 0.8em; color: #666; margin-top: 5px;">*Thay đổi giá trị sẽ áp dụng cho lần kiểm tra
+                    tiếp theo.</p>
+            </details>
+
+            <div class="preview-container" id="previewContainer">
+                <img id="preview" class="preview-img" alt="Image Preview">
+            </div>
+
+            <button onclick="uploadImage()" id="uploadBtn" class="btn-check">Check Image</button>
+        </div>
+
+        <!-- Result Section -->
+        <div class="box">
+            <h3>Analysis Results</h3>
+            <div id="loader" class="loader"></div>
+
+            <div id="introText" style="color: #888; text-align: center; margin-top: 50px;">
+                Results will appear here...
+            </div>
+
+            <div id="resultContent" style="display:none;">
+                <div id="decisionLine" class="status"></div>
+                <div class="time">Latency: <span id="timeTaken">0</span> ms</div>
+                <hr>
+                <div><strong>Reasons:</strong> <span id="reasonsList" style="font-size: 0.9em;">-</span></div>
+                <hr>
+                <pre id="jsonOutput"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const preview = document.getElementById('preview');
+        const previewContainer = document.getElementById('previewContainer');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const loader = document.getElementById('loader');
+        const resultContent = document.getElementById('resultContent');
+        const introText = document.getElementById('introText');
+        const jsonOutput = document.getElementById('jsonOutput');
+        const decisionLine = document.getElementById('decisionLine');
+        const timeTaken = document.getElementById('timeTaken');
+        const reasonsList = document.getElementById('reasonsList');
+
+        let currentFile = null;
+
+        // --- Event Listeners ---
+
+        // 1. Click to browse
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // 2. File Input Change
+        fileInput.addEventListener('change', function () {
+            if (this.files[0]) handleFile(this.files[0]);
+        });
+
+        // 3. Drag & Drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files[0]) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        // 4. Paste Board (Ctrl + V)
+        document.addEventListener('paste', (e) => {
+            const items = e.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const file = items[i].getAsFile();
+                    handleFile(file);
+                    break;
+                }
+            }
+        });
+
+        // --- Functions ---
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert("Only images are allowed!");
+                return;
+            }
+            currentFile = file;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                preview.src = e.target.result;
+                previewContainer.style.display = 'flex';
+                // Reset Results
+                resultContent.style.display = 'none';
+
+                // Auto trigger check
+                uploadImage();
+            }
+            reader.readAsDataURL(file);
+        }
+
+        async function uploadImage() {
+            if (!currentFile) {
+                alert("Please select or paste an image first!");
+                return;
+            }
+
+            // UI Loading state
+            loader.style.display = 'block';
+            introText.style.display = 'none';
+            resultContent.style.display = 'none';
+            uploadBtn.disabled = true;
+            uploadBtn.innerText = "Checking...";
+
+            const formData = new FormData();
+            formData.append('file', currentFile);
+
+            // Add custom thresholds
+            const syntheticThresh = document.getElementById('synthetic-thresh').value;
+            const entropyThresh = document.getElementById('entropy-thresh').value;
+
+            formData.append('custom_synthetic_thresh', syntheticThresh);
+            formData.append('custom_entropy_thresh', entropyThresh);
+
+            try {
+                const start = performance.now();
+                const response = await fetch('/api/check-image', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                // Render Result
+                loader.style.display = 'none';
+                resultContent.style.display = 'block';
+                uploadBtn.disabled = false;
+                uploadBtn.innerText = "Check Image";
+
+                // Decision & Color
+                const decision = data.decision || "UNKNOWN";
+                decisionLine.className = 'status ' + decision;
+                decisionLine.textContent = `DECISION: ${decision} (${data.allowed ? 'ALLOWED' : 'BLOCKED'})`;
+
+                // Reasons
+                if (data.reasons && data.reasons.length > 0) {
+                    reasonsList.innerHTML = data.reasons.map(r => `<span class="badge">${r}</span>`).join(' ');
+                } else {
+                    reasonsList.textContent = "None (Clean)";
+                }
+
+                // JSON
+                jsonOutput.textContent = JSON.stringify(data, null, 2);
+
+                // Timing
+                if (data.meta && data.meta.elapsed_ms) {
+                    timeTaken.textContent = data.meta.elapsed_ms;
+                } else {
+                    timeTaken.textContent = 0;
+                }
+
+            } catch (error) {
+                console.error("Error:", error);
+                loader.style.display = 'none';
+                introText.style.display = 'block';
+                introText.innerText = "Error checking image. Check console.";
+                uploadBtn.disabled = false;
+                uploadBtn.innerText = "Check Image";
+            }
+        }
+    </script>
+</body>
+
+</html>
