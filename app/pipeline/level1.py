@@ -105,14 +105,25 @@ def run_level1_checks(img_cv, img_pil, filename="", file_format="", config_overr
         scores['trust_mode'] = "HIGH"
         # HIGH TRUST: Faces, Exif, OR Strong Realism stats.
         
-        # EXCEPTION: MEME/COLLAGE DETECTION
-        # Only apply if NOT physically real AND Entropy is Low.
-        # Real photos with flat backgrounds (sky) usually have High Entropy (> 7.0).
-        # Memes usually have Low Entropy (< 6.5).
-        is_meme_suspect = is_png and flatness_score > 0.5 and not is_physically_real and entropy < base_entropy_thresh
+        # EXCEPTION: MEME/COLLAGE/DIGITAL ART DETECTION
+        is_meme_suspect = False
         
+        # Case 1: Very High Flatness (> 0.6) + PNG
+        # Digital Art / Anime often has large perfect flat areas. 
+        # Real photos (even sky) rarely exceed 0.6 due to noise, unless overexposed.
+        if is_png and flatness_score > 0.6:
+            is_meme_suspect = True
+            
+        # Case 2: Moderate Flatness (0.5 - 0.6) + PNG
+        # Check Entropy to distinguish Real Landscape (High Entropy) vs Meme (Low Entropy)
+        elif is_png and flatness_score > 0.5:
+            if not is_physically_real and entropy < base_entropy_thresh:
+                is_meme_suspect = True
+
         if is_meme_suspect:
-            # Downgrade trust for Memes
+            # Downgrade trust for Memes/Digital Art
+            # If it's Very High Flatness (> 0.6), we need a threshold below 0.6 to catch it.
+            # Set to 0.55.
             synthetic_thresh = 0.55 
         else:
             synthetic_thresh = 0.85
