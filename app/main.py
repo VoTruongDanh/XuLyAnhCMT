@@ -65,7 +65,8 @@ def health_check():
 async def check_image(
     file: UploadFile = File(...),
     custom_synthetic_thresh: float = Form(None),
-    custom_entropy_thresh: float = Form(None)
+    custom_entropy_thresh: float = Form(None),
+    custom_ai_model: str = Form(None)
 ):
     start_time = time.time()
     
@@ -75,6 +76,8 @@ async def check_image(
         config_override['synthetic_thresh'] = custom_synthetic_thresh
     if custom_entropy_thresh is not None:
         config_override['entropy_thresh'] = custom_entropy_thresh
+    if custom_ai_model is not None and custom_ai_model.strip() != "":
+        config_override['ai_model'] = custom_ai_model.strip()
     
     # 1. Read file
     try:

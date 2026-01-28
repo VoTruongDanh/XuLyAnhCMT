@@ -203,6 +203,81 @@
                 transform: rotate(360deg);
             }
         }
+
+        /* Settings Styles */
+        details {
+            margin-top: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fff;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        details[open] {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        summary {
+            padding: 12px 15px;
+            cursor: pointer;
+            font-weight: 600;
+            background: #f8f9fa;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #4a5568;
+        }
+
+        summary:hover {
+            background: #edf2f7;
+        }
+
+        .settings-content {
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            background: #fff;
+        }
+
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .setting-label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #718096;
+            margin-bottom: 5px;
+        }
+
+        .setting-input {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 0.95em;
+            transition: border-color 0.2s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .setting-input:focus {
+            border-color: #3182ce;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        .setting-note {
+            font-size: 0.8em;
+            color: #a0aec0;
+            margin-top: 10px;
+            font-style: italic;
+            text-align: center;
+            display: block;
+        }
     </style>
 </head>
 
@@ -225,27 +300,49 @@
             </div>
 
             <!-- Advanced Settings -->
-            <details style="margin-top: 15px; border: 1px solid #ddd; padding: 10px; border-radius: 8px;">
-                <summary style="cursor: pointer; font-weight: bold;">Advanced Thresholds (Tùy chỉnh ngưỡng)</summary>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+            <details>
+                <summary>
+                    <span>Advanced Thresholds (Cấu hình nâng cao)</span>
+                    <span style="font-size: 0.8em; opacity: 0.6;">▼</span>
+                </summary>
+                <div class="settings-content">
 
                     <!-- Synthetic Threshold -->
                     <div class="setting-item">
-                        <label title="Base threshold for flatness. Lower = Stricter. Default: 0.7">Synthetic
-                            Threshold:</label>
-                        <input type="number" id="synthetic-thresh" step="0.05" value="0.70">
+                        <label class="setting-label"
+                            title="Base threshold for flatness. Lower = Stricter. Default: 0.7">
+                            Synthetic Threshold
+                        </label>
+                        <input type="number" id="synthetic-thresh" class="setting-input" step="0.05" value="0.70">
                     </div>
 
                     <!-- Entropy Threshold -->
                     <div class="setting-item">
-                        <label title="Entropy needed to be considered 'Physically Real'. Default: 7.0">Realism
-                            Entropy:</label>
-                        <input type="number" id="entropy-thresh" step="0.1" value="7.0">
+                        <label class="setting-label"
+                            title="Entropy needed to be considered 'Physically Real'. Default: 7.0">
+                            Realism Entropy
+                        </label>
+                        <input type="number" id="entropy-thresh" class="setting-input" step="0.1" value="7.0">
                     </div>
 
+                    <!-- AI Model Selection -->
+                    <div class="setting-item" style="grid-column: span 2;">
+                        <label class="setting-label" title="Select the AI Detection Model to use (Level 2)">
+                            AI Detection Model
+                        </label>
+                        <select id="ai-model-select" class="setting-input">
+                            <option value="umm-maybe/AI-image-detector">umm-maybe/AI-image-detector (Balanced)</option>
+                            <option value="ensemble" selected>Ensemble (Voting: Ateeqq + DeepFake V1) [Default]</option>
+                            <option value="Ateeqq/ai-vs-human-image-detector">Ateeqq/ai-vs-human-image-detector (High
+                                Sensitivity)</option>
+                            <option value="Nahrawy/AI-image-detector">Nahrawy/AI-image-detector (Alternative)</option>
+                        </select>
+                    </div>
+
+                    <span class="setting-note" style="grid-column: span 2;">
+                        *Thay đổi sẽ áp dụng cho lần kiểm tra tiếp theo
+                    </span>
                 </div>
-                <p style="font-size: 0.8em; color: #666; margin-top: 5px;">*Thay đổi giá trị sẽ áp dụng cho lần kiểm tra
-                    tiếp theo.</p>
             </details>
 
             <div class="preview-container" id="previewContainer">
@@ -429,9 +526,11 @@
             // Add custom thresholds
             const syntheticThresh = document.getElementById('synthetic-thresh').value;
             const entropyThresh = document.getElementById('entropy-thresh').value;
+            const aiModel = document.getElementById('ai-model-select').value;
 
             formData.append('custom_synthetic_thresh', syntheticThresh);
             formData.append('custom_entropy_thresh', entropyThresh);
+            formData.append('custom_ai_model', aiModel);
 
             try {
                 const start = performance.now();
@@ -499,8 +598,22 @@
 
                 if (aiProb !== -1) {
                     const isAi = aiProb > 0.9;
-                    lvl1Res.textContent = isAi ? "AI GENERATED" : "HUMAN / REAL";
-                    lvl1Detail.textContent = `AI: ${(aiProb * 100).toFixed(1)}% | Human: ${(humanProb * 100).toFixed(1)}%`;
+                    const diff = data.scores.ensemble_diff;
+
+                    if (diff !== undefined) {
+                        // Ensemble Mode
+                        if (diff > 0.4) {
+                            lvl1Res.textContent = "UNCERTAIN";
+                            lvl1Detail.textContent = `High Disagreement (${diff.toFixed(2)}) - Flagged for Review`;
+                        } else {
+                            lvl1Res.textContent = isAi ? "AI GENERATED" : "HUMAN / REAL";
+                            lvl1Detail.textContent = `Ensemble Avg: ${(aiProb * 100).toFixed(1)}% | Diff: ${diff.toFixed(2)}`;
+                        }
+                    } else {
+                        // Single Model
+                        lvl1Res.textContent = isAi ? "AI GENERATED" : "HUMAN / REAL";
+                        lvl1Detail.textContent = `AI: ${(aiProb * 100).toFixed(1)}% | Human: ${(humanProb * 100).toFixed(1)}%`;
+                    }
                 } else {
                     lvl1Res.textContent = "Error / Skipped";
                     lvl1Detail.textContent = l2Error ? l2Error : "Model did not run";
