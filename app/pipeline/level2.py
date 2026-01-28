@@ -42,7 +42,7 @@ def run_level2_checks(img_cv, img_pil, filename="", file_format="", config_overr
     # --- ENSEMBLE LOGIC ---
     if model_name == "ensemble":
         model_a_name = "Ateeqq/ai-vs-human-image-detector"
-        model_b_name = "prithivMLmods/Deep-Fake-Detector-Model"
+        model_b_name = "umm-maybe/AI-image-detector"
         
         clf_a = get_classifier(model_a_name)
         clf_b = get_classifier(model_b_name)
@@ -54,16 +54,20 @@ def run_level2_checks(img_cv, img_pil, filename="", file_format="", config_overr
         # Predict A
         results_a = clf_a(img_pil)
         ai_score_a = 0.0
+        details_a = []
         for r in results_a:
             label = r['label'].lower()
+            details_a.append(f"{label}:{round(r['score'],3)}")
             if "fake" in label or "ai" in label or "artificial" in label:
                 ai_score_a = r['score']
                 
         # Predict B
         results_b = clf_b(img_pil)
         ai_score_b = 0.0
+        details_b = []
         for r in results_b:
             label = r['label'].lower()
+            details_b.append(f"{label}:{round(r['score'],3)}")
             if "fake" in label or "ai" in label or "artificial" in label:
                 ai_score_b = r['score']
         
@@ -77,11 +81,13 @@ def run_level2_checks(img_cv, img_pil, filename="", file_format="", config_overr
         scores['ai_prob_b'] = float(ai_score_b)
         scores['ensemble_diff'] = float(abs_diff)
         
+        # Helper logs
+        # reasons.append(f"DEBUG_A[{model_a_name}]: {details_a}")
+        # reasons.append(f"DEBUG_B[{model_b_name}]: {details_b}")
+        
         # Disagreement Handling
         if abs_diff > 0.4:
-            # Strong disagreement -> Uncertain
             reasons.append(f"AI_UNCERTAIN (Diff: {round(abs_diff, 2)})")
-            # Fail-safe: treat as ALLOW or Soft Block? User said "trả uncertain (đỡ sai bậy)" -> implies ALLOW/Safety.
             return True, "ALLOW", reasons, scores
             
         # Agreement -> Use average
