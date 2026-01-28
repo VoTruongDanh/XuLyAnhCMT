@@ -134,7 +134,7 @@ async def check_image(
                 "meta": meta
             })
 
-        # 2. Level 1 Checks (AI Detection)
+        # 2. Level 1 Checks (Style/Illustration Detection)
         l1_passed, l1_decision, l1_reasons, l1_scores = run_level1_checks(
             img_cv, img_pil, filename=file.filename,
             config_override=config_override
@@ -151,7 +151,7 @@ async def check_image(
                 "meta": meta
             })
 
-        # 3. Level 2 Checks (Style/Illustration Detection)
+        # 3. Level 2 Checks (AI Detection)
         l2_passed, l2_decision, l2_reasons, l2_scores = run_level2_checks(
             img_cv, img_pil, filename=file.filename,
             config_override=config_override

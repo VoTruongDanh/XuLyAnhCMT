@@ -285,31 +285,31 @@
                         </div>
                     </div>
 
-                    <!-- Level 1 -->
+                    <!-- Level 1 (Was Level 2) -->
                     <div
                         style="padding: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;">
                         <div>
-                            <strong style="color: #555;">Level 1: AI Detector</strong>
-                            <div style="font-size: 0.85em; color: #888;">Detects AI-generated images (vs Human photos).
-                            </div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div id="lvl1-res" style="font-weight: bold;">-</div>
-                            <div id="lvl1-detail" style="font-size: 0.8em; color: #888;"></div>
-                        </div>
-                    </div>
-
-                    <!-- Level 2 -->
-                    <div
-                        style="padding: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;">
-                        <div>
-                            <strong style="color: #555;">Level 2: Style Detector</strong>
+                            <strong style="color: #555;">Level 1: Style Detector</strong>
                             <div style="font-size: 0.85em; color: #888;">Detects Illustrations/Anime (vs Real Photos).
                             </div>
                         </div>
                         <div style="text-align: right;">
                             <div id="lvl2-res" style="font-weight: bold;">-</div>
                             <div id="lvl2-detail" style="font-size: 0.8em; color: #888;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Level 2 (Was Level 1) -->
+                    <div
+                        style="padding: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <strong style="color: #555;">Level 2: AI Detector</strong>
+                            <div style="font-size: 0.85em; color: #888;">Detects AI-generated images (vs Human photos).
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div id="lvl1-res" style="font-weight: bold;">-</div>
+                            <div id="lvl1-detail" style="font-size: 0.8em; color: #888;"></div>
                         </div>
                     </div>
 
@@ -469,27 +469,9 @@
                     lvl0Detail.textContent = "-";
                 }
 
-                // --- Level 1: AI Detector ---
-                const aiProb = data.scores.ai_prob !== undefined ? data.scores.ai_prob : -1;
-                const humanProb = data.scores.human_prob !== undefined ? data.scores.human_prob : -1;
-                const l1Error = data.scores.l1_error;
-
-                const lvl1Res = document.getElementById('lvl1-res');
-                const lvl1Detail = document.getElementById('lvl1-detail');
-
-                if (aiProb !== -1) {
-                    const isAi = aiProb > 0.9;
-                    lvl1Res.textContent = isAi ? "AI GENERATED" : "HUMAN / REAL";
-                    // Color removed
-                    lvl1Detail.textContent = `AI: ${(aiProb * 100).toFixed(1)}% | Human: ${(humanProb * 100).toFixed(1)}%`;
-                } else {
-                    lvl1Res.textContent = "Error / Skipped";
-                    lvl1Detail.textContent = l1Error ? l1Error : "Model did not run";
-                }
-
-                // --- Level 2: Style Detector ---
+                // --- Level 1: Style Detector ---
                 const artProb = data.scores.art_prob !== undefined ? data.scores.art_prob : -1;
-                const l2Error = data.scores.l2_error;
+                const l1Error = data.scores.l1_error; // L1 is now Style
 
                 const lvl2Res = document.getElementById('lvl2-res');
                 const lvl2Detail = document.getElementById('lvl2-detail');
@@ -497,11 +479,27 @@
                 if (artProb !== -1) {
                     const isArt = artProb > 0.8;
                     lvl2Res.textContent = isArt ? "ILLUSTRATION" : "PHOTO";
-                    // Color removed
                     lvl2Detail.textContent = `Art: ${(artProb * 100).toFixed(1)}% | Photo: ${(100 - artProb * 100).toFixed(1)}%`;
                 } else {
                     lvl2Res.textContent = "Error / Skipped";
-                    lvl2Detail.textContent = l2Error ? l2Error : "Model did not run";
+                    lvl2Detail.textContent = l1Error ? l1Error : "Model did not run";
+                }
+
+                // --- Level 2: AI Detector ---
+                const aiProb = data.scores.ai_prob !== undefined ? data.scores.ai_prob : -1;
+                const humanProb = data.scores.human_prob !== undefined ? data.scores.human_prob : -1;
+                const l2Error = data.scores.l2_error; // L2 is now AI
+
+                const lvl1Res = document.getElementById('lvl1-res');
+                const lvl1Detail = document.getElementById('lvl1-detail');
+
+                if (aiProb !== -1) {
+                    const isAi = aiProb > 0.9;
+                    lvl1Res.textContent = isAi ? "AI GENERATED" : "HUMAN / REAL";
+                    lvl1Detail.textContent = `AI: ${(aiProb * 100).toFixed(1)}% | Human: ${(humanProb * 100).toFixed(1)}%`;
+                } else {
+                    lvl1Res.textContent = "Error / Skipped";
+                    lvl1Detail.textContent = l2Error ? l2Error : "Model did not run";
                 }
 
                 // --- Level 3: Trust & Heuristics ---

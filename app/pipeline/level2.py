@@ -1,67 +1,70 @@
 import logging
+import time
 import torch
 from app.config import settings
 
-# Lazy load 
-clip_classifier = None
+# Lazy load transformers to keep startup fast (or manageable)
+pipeline = None
+classifier = None
 
-def get_clip_classifier():
-    global clip_classifier
-    if clip_classifier is None:
+def get_classifier():
+    global classifier
+    if classifier is None:
         try:
             from transformers import pipeline
-            print("Loading Level 2 Model (CLIP Zero-shot)...")
-            # Using openai/clip-vit-base-patch32 for good balance of speed/accuracy
-            # or 'laion/CLIP-ViT-B-32-laion2B-s34B-b79K' for multi-lingual if needed, but English is fine.
-            clip_classifier = pipeline("zero-shot-image-classification", model="openai/clip-vit-base-patch32")
+            print("Loading Level 2 Model (AI vs Human)...")
+            # Using a lightweight, effective model for AI detection
+            # Using 'umm-maybe/AI-image-detector' which is often more balanced for real photos
+            classifier = pipeline("image-classification", model="umm-maybe/AI-image-detector")
             print("Level 2 Model Loaded.")
         except Exception as e:
             print(f"Failed to load Level 2 Model: {e}")
             return None
-    return clip_classifier
+    return classifier
 
 def run_level2_checks(img_cv, img_pil, filename="", file_format="", config_override=None):
     """
-    Level 2: Style Detection (Real Photo vs Illustration/Art).
-    Uses CLIP Zero-Shot Classification.
+    Level 2: AI Generated Image Detection.
+    Uses 'umm-maybe/AI-image-detector'.
     """
     scores = {}
     reasons = []
     
-    clf = get_clip_classifier()
+    # 1. Load Model
+    clf = get_classifier()
     if clf is None:
+        # If model fails to load, fail open (allow) or warn? 
+        # For now, let's allow but log potential error.
         scores['l2_error'] = "Model Load Failed"
         return True, "ALLOW", reasons, scores
 
     try:
-        # Define candidate labels
-        # These prompts are robust for CLIP
-        labels = [
-            "a real photo taken by a camera", 
-            "a drawing or illustration or artwork"
-        ]
+        # 2. Predict
+        # Pipeline accepts PIL Image
+        results = clf(img_pil)
+        # Result format: [{'label': 'real', 'score': 0.99}, {'label': 'fake', 'score': 0.01}]
+        # Check labels manually as order might vary
         
-        results = clf(img_pil, candidate_labels=labels)
-        # Result example: [{'score': 0.99, 'label': 'a real photo...'}, ...]
-        
-        real_score = 0.0
-        art_score = 0.0
+        ai_score = 0.0
+        human_score = 0.0
         
         for r in results:
-            if "real photo" in r['label']:
-                real_score = r['score']
-            elif "drawing" in r['label']:
-                art_score = r['score']
+            label = r['label'].lower()
+            score = r['score']
+            if "fake" in label or "ai" in label or "artificial" in label:
+                ai_score = score
+            elif "real" in label or "human" in label:
+                human_score = score
                 
-        scores['real_prob'] = float(real_score)
-        scores['art_prob'] = float(art_score)
+        scores['ai_prob'] = float(ai_score)
+        scores['human_prob'] = float(human_score)
         
-        # Threshold decision
-        # If Art probability is overwhelmingly high
-        ART_THRESHOLD = 0.8 # Conservative. CLIP is usually very confident (0.99)
+        # 3. Decision
+        # Threshold can be tuned. Start with 0.8 to be safe against false positives.
+        AI_THRESHOLD = 0.90 
         
-        if art_score > ART_THRESHOLD:
-            reasons.append(f"ILLUSTRATION_OR_ARTWORK ({round(art_score*100)}%)")
+        if ai_score > AI_THRESHOLD:
+            reasons.append(f"AI_GENERATED_CONTENT ({round(ai_score*100)}%)")
             return False, "HARD_BLOCK", reasons, scores
             
         return True, "ALLOW", reasons, scores
