@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill & Menu Detector (Zero-Shot)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .box {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            flex: 1;
+            min-width: 320px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Upload Zone Styles */
+        .upload-zone {
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            background: #f8f9fa;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: #007bff;
+            background-color: #eef7ff;
+        }
+
+        .upload-zone p {
+            margin: 10px 0 0;
+            color: #6c757d;
+        }
+
+        .upload-icon {
+            font-size: 40px;
+            color: #a0aec0;
+            margin-bottom: 10px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .preview-container {
+            margin-top: 20px;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f3f5;
+            border-radius: 8px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .preview-img {
+            max-width: 100%;
+            max-height: 300px;
+            display: block;
+        }
+
+        /* Buttons */
+        .btn-check {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 20px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .btn-check:hover {
+            background: #0056b3;
+        }
+
+        .btn-check:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+        }
+
+        /* Results Styles */
+        .result-header {
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .result-title {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .result-desc {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .BILL-INVOICE {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .MENU {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .OTHER,
+        .FAKE_EDITED {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .scores-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .score-card {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #eee;
+        }
+
+        .score-val {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .score-label {
+            font-size: 0.8em;
+            color: #718096;
+            margin-top: 3px;
+        }
+
+        #loader {
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 8px 16px;
+            background: #fff;
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .back-link:hover {
+            color: #3182ce;
+            border-color: #3182ce;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div style="text-align: center;">
+        <a href="/" class="back-link">← Back to Main Checker</a>
+        <h1>Bill & Menu Detector</h1>
+        <p class="subtitle">Zero-Shot Classification</p>
+    </div>
+
+    <div class="container">
+        <!-- Upload Section -->
+        <div class="box">
+            <h3>Upload Image</h3>
+            <div class="upload-zone" id="dropZone">
+                <div class="upload-icon" style="color: #cbd5e0; font-size: 30px;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                </div>
+                <p><strong>Click to browse</strong><br>or drop file here</p>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+
+            <div class="preview-container" id="previewContainer">
+                <img id="preview" class="preview-img" alt="Image Preview">
+            </div>
+
+            <button onclick="uploadImage()" id="uploadBtn" class="btn-check">Check Content</button>
+        </div>
+
+        <!-- Result Section -->
+        <div class="box">
+            <h3>Conclusion & Analysis</h3>
+
+            <div id="loader"></div>
+
+            <div id="introText" style="text-align: center; color: #888; margin-top: 50px;">
+                Upload an image to see if it's a Bill, Menu, or just a Photo.
+            </div>
+
+            <div id="resultContent" style="display: none;">
+                <!-- Main Decision Banner -->
+                <div id="decisionBanner" class="result-header">
+                    <div id="predictionTitle" class="result-title">-</div>
+                    <div id="predictionDesc" class="result-desc">Detected Content Type</div>
+                </div>
+
+                <div style="margin-top: 20px; margin-bottom: 10px; font-weight: 600; color: #555;">Confidence Scores:
+                </div>
+
+                <div class="scores-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <!-- 3 column layout handles 5 items by wrapping -->
+                    <div class="score-card">
+                        <div class="score-val" id="score-bill">-</div>
+                        <div class="score-label">Bill/Invoice</div>
+                    </div>
+                    <div class="score-card">
+                        <div class="score-val" id="score-menu">-</div>
+                        <div class="score-label">Menu</div>
+                    </div>
+                    <div class="score-card" style="background: #e2e8f0; border-color: #cbd5e0;">
+                        <div class="score-val" id="score-contract">-</div>
+                        <div class="score-label">Contract/Doc</div>
+                    </div>
+                    <div class="score-card">
+                        <div class="score-val" id="score-other">-</div>
+                        <div class="score-label">Other</div>
+                    </div>
+                    <div class="score-card" style="background: #FFF5F5; border-color: #FEB2B2;">
+                        <div class="score-val" id="score-fake" style="color: #C53030;">-</div>
+                        <div class="score-label">Fake/Edited</div>
+                    </div>
+                </div>
+
+                <!-- Raw JSON Display -->
+                <div style="margin-top: 30px;">
+                    <details>
+                        <summary style="cursor: pointer; color: #666; font-size: 0.9em;">View Raw JSON Result</summary>
+                        <pre id="rawJson"
+                            style="background: #f4f4f4; padding: 15px; border-radius: 6px; overflow-x: auto; font-size: 0.85em; color: #333; margin-top: 10px; border: 1px solid #ddd;"></pre>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const preview = document.getElementById('preview');
+        const previewContainer = document.getElementById('previewContainer');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const loader = document.getElementById('loader');
+        const resultContent = document.getElementById('resultContent');
+        const introText = document.getElementById('introText');
+
+        let currentFile = null;
+
+        // --- Event Listeners ---
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', function () {
+            if (this.files[0]) handleFile(this.files[0]);
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+        });
+
+        document.addEventListener('paste', (e) => {
+            const items = e.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    handleFile(items[i].getAsFile());
+                    break;
+                }
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert("Only images are allowed!");
+                return;
+            }
+            currentFile = file;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                preview.src = e.target.result;
+                previewContainer.style.display = 'flex';
+                // Reset Results
+                resultContent.style.display = 'none';
+                introText.style.display = 'none'; // Hide intro on upload
+                // Auto Upload? No, let user click. Or auto? Index uses button. Let's wait for button.
+                // Wait, User might expect auto. Let's auto trigger to match Index flow? 
+                // Index flow requires button click in my previous observation?
+                // Actually Index code: `uploadImage()` is called in `reader.onload`. So it IS auto.
+                // Let's do auto here too.
+                uploadImage();
+            }
+            reader.readAsDataURL(file);
+        }
+
+        async function uploadImage() {
+            if (!currentFile) return;
+
+            // UI Loading
+            loader.style.display = 'block';
+            introText.style.display = 'none';
+            resultContent.style.display = 'none';
+            uploadBtn.disabled = true;
+            uploadBtn.innerText = "Analyzing...";
+
+            const formData = new FormData();
+            formData.append('file', currentFile);
+
+            try {
+                const response = await fetch('/api/check-bill-menu', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                // Render Result
+                loader.style.display = 'none';
+                resultContent.style.display = 'block';
+                uploadBtn.disabled = false;
+                uploadBtn.innerText = "Check Content";
+
+                const pred = data.prediction;
+                const safeClass = pred.replace('/', '-');
+
+                // Update Banner
+                const banner = document.getElementById('decisionBanner');
+                banner.className = 'result-header ' + safeClass;
+
+                // Logic: Allow if Bill/Menu, Block if Other
+                let status = "BLOCKED";
+                if (pred === "BILL/INVOICE" || pred === "MENU") status = "ALLOWED";
+
+                document.getElementById('predictionTitle').textContent = status;
+
+                // Show Detail below
+                let desc = document.getElementById('predictionDesc');
+                if (!desc) {
+                    desc = document.createElement('div');
+                    desc.id = 'predictionDesc';
+                    desc.className = 'result-desc';
+                    document.getElementById('decisionBanner').appendChild(desc);
+                }
+                desc.innerHTML = `Detected: <strong>${pred}</strong>`;
+
+                // Color update moved to banner above in safeClass (matched from backend)
+                // Actually backend returns 'BILL/INVOICE' which maps to CSS .BILL-INVOICE
+                // But if we want BLOCKED to be Red, we rely on 'OTHER' class.
+                // Contracts mapping to OTHER in backend handles the color red. Matches "BLOCKED".
+                // So color logic is already fine via `safeClass`.
+
+                // Update Scores
+                document.getElementById('score-bill').textContent = (data.scores.receipt_invoice * 100).toFixed(1) + '%';
+                document.getElementById('score-menu').textContent = (data.scores.restaurant_menu * 100).toFixed(1) + '%';
+                document.getElementById('score-contract').textContent = (data.scores.contract_document * 100).toFixed(1) + '%';
+                document.getElementById('score-other').textContent = (data.scores.normal_photo * 100).toFixed(1) + '%';
+
+                // Fake Score
+                if (data.scores.fake_probability !== undefined) {
+                    document.getElementById('score-fake').textContent = (data.scores.fake_probability * 100).toFixed(1) + '%';
+                } else {
+                    document.getElementById('score-fake').textContent = "N/A";
+                }
+
+                // Show Raw JSON
+                document.getElementById('rawJson').textContent = JSON.stringify(data, null, 2);
+
+            } catch (error) {
+                console.error("Error:", error);
+                loader.style.display = 'none';
+                alert("Error checking image");
+                uploadBtn.disabled = false;
+                uploadBtn.innerText = "Check Content";
+            }
+        }
+    </script>
+</body>
+
+</html>

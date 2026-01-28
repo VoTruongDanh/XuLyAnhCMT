@@ -284,6 +284,30 @@
 <body>
 
     <h1>Irrelevant Image Checker</h1>
+    <!-- Mode Switcher -->
+    <div style="text-align: center; margin-bottom: 25px; display: flex; justify-content: center; gap: 10px;">
+        <button onclick="switchMode('MAIN')" id="btn-mode-main" style="
+            padding: 10px 24px; 
+            background: #2c3e50; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: 600; 
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        ">Main Checker</button>
+
+        <button onclick="switchMode('BILL')" id="btn-mode-bill" style="
+            padding: 10px 24px; 
+            background: #e2e8f0; 
+            color: #4a5568; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: 600; 
+            cursor: pointer;
+            transition: all 0.2s;
+        ">Bill & Menu Detector</button>
+    </div>
 
     <div class="container">
         <!-- Input Section -->
@@ -365,60 +389,120 @@
                 <div id="decisionLine" class="status"></div>
                 <div class="time">Latency: <span id="timeTaken">0</span> ms</div>
 
-                <!-- Level Breakdown -->
-                <div style="margin: 15px 0; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
+                <!-- MAIN CHECKER PANEL -->
+                <div id="panel-main">
+                    <!-- Level Breakdown -->
+                    <div style="margin: 15px 0; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
 
-                    <!-- Level 0 -->
-                    <div
-                        style="padding: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;">
-                        <div>
-                            <strong style="color: #555;">Level 0: Quality Check</strong>
-                            <div style="font-size: 0.85em; color: #888;">Basic validty: Blur, Size, Resolution, etc.
+                        <!-- Level 0 -->
+                        <div
+                            style="padding: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <strong style="color: #555;">Level 0: Quality Check</strong>
+                                <div style="font-size: 0.85em; color: #888;">Basic validty: Blur, Size, Resolution, etc.
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div id="lvl0-res" style="font-weight: bold;">-</div>
+                                <div id="lvl0-detail" style="font-size: 0.8em; color: #888;"></div>
                             </div>
                         </div>
-                        <div style="text-align: right;">
-                            <div id="lvl0-res" style="font-weight: bold;">-</div>
-                            <div id="lvl0-detail" style="font-size: 0.8em; color: #888;"></div>
-                        </div>
-                    </div>
 
-                    <!-- Level 1 (Was Level 2) -->
-                    <div
-                        style="padding: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;">
-                        <div>
-                            <strong style="color: #555;">Level 1: Style Detector</strong>
-                            <div style="font-size: 0.85em; color: #888;">Detects Illustrations/Anime (vs Real Photos).
+                        <!-- Level 1: Style -->
+                        <div
+                            style="padding: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <strong style="color: #555;">Level 1: Style Detector</strong>
+                                <div style="font-size: 0.85em; color: #888;">Detects Illustrations/Anime (vs Real
+                                    Photos).</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div id="lvl2-res" style="font-weight: bold;">-</div>
+                                <div id="lvl2-detail" style="font-size: 0.8em; color: #888;"></div>
                             </div>
                         </div>
-                        <div style="text-align: right;">
-                            <div id="lvl2-res" style="font-weight: bold;">-</div>
-                            <div id="lvl2-detail" style="font-size: 0.8em; color: #888;"></div>
-                        </div>
-                    </div>
 
-                    <!-- Level 2 (Was Level 1) -->
-                    <div
-                        style="padding: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;">
-                        <div>
-                            <strong style="color: #555;">Level 2: AI Detector</strong>
-                            <div style="font-size: 0.85em; color: #888;">Detects AI-generated images (vs Human photos).
+                        <!-- Level 2: AI -->
+                        <div
+                            style="padding: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <strong style="color: #555;">Level 2: AI Detector</strong>
+                                <div style="font-size: 0.85em; color: #888;">Detects AI-generated images (vs Human
+                                    photos).</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div id="lvl1-res" style="font-weight: bold;">-</div>
+                                <div id="lvl1-detail" style="font-size: 0.8em; color: #888;"></div>
                             </div>
                         </div>
-                        <div style="text-align: right;">
-                            <div id="lvl1-res" style="font-weight: bold;">-</div>
-                            <div id="lvl1-detail" style="font-size: 0.8em; color: #888;"></div>
+
+                        <!-- Level 3: Trust -->
+                        <div style="padding: 10px; display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <strong style="color: #555;">Level 3: Trust & Heuristics</strong>
+                                <div style="font-size: 0.85em; color: #888;">Checks Metadata, Memes, Screenshots, etc.
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div id="lvl3-res" style="font-weight: bold;">-</div>
+                                <div id="lvl3-detail" style="font-size: 0.8em; color: #888;"></div>
+                            </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Level 3 -->
-                    <div style="padding: 10px; display: flex; align-items: center; justify-content: space-between;">
-                        <div>
-                            <strong style="color: #555;">Level 3: Trust & Heuristics</strong>
-                            <div style="font-size: 0.85em; color: #888;">Checks Metadata, Memes, Screenshots, etc.</div>
+                <!-- BILL DETECTOR PANEL -->
+                <div id="panel-bill" style="display: none;">
+                    <style>
+                        .scores-grid {
+                            display: grid;
+                            grid-template-columns: repeat(3, 1fr);
+                            gap: 10px;
+                            margin-top: 20px;
+                        }
+
+                        .score-card {
+                            background: #f8f9fa;
+                            padding: 10px;
+                            border-radius: 8px;
+                            text-align: center;
+                            border: 1px solid #eee;
+                        }
+
+                        .score-val {
+                            font-size: 1.2em;
+                            font-weight: bold;
+                            color: #2d3748;
+                        }
+
+                        .score-label {
+                            font-size: 0.8em;
+                            color: #718096;
+                            margin-top: 3px;
+                        }
+                    </style>
+                    <div id="bill-prediction-desc" style="text-align: center; margin-bottom: 15px; color: #666;"></div>
+
+                    <div class="scores-grid">
+                        <div class="score-card">
+                            <div class="score-val" id="score-bill">-</div>
+                            <div class="score-label">Bill/Invoice</div>
                         </div>
-                        <div style="text-align: right;">
-                            <div id="lvl3-res" style="font-weight: bold;">-</div>
-                            <div id="lvl3-detail" style="font-size: 0.8em; color: #888;"></div>
+                        <div class="score-card">
+                            <div class="score-val" id="score-menu">-</div>
+                            <div class="score-label">Menu</div>
+                        </div>
+                        <div class="score-card" style="background: #e2e8f0; border-color: #cbd5e0;">
+                            <div class="score-val" id="score-contract">-</div>
+                            <div class="score-label">Contract/Doc</div>
+                        </div>
+                        <div class="score-card">
+                            <div class="score-val" id="score-other">-</div>
+                            <div class="score-label">Other</div>
+                        </div>
+                        <div class="score-card" style="background: #FFF5F5; border-color: #FEB2B2;">
+                            <div class="score-val" id="score-fake" style="color: #C53030;">-</div>
+                            <div class="score-label">Fake/Edited</div>
                         </div>
                     </div>
                 </div>
@@ -427,8 +511,10 @@
                 <div><strong>Reasons:</strong> <span id="reasonsList" style="font-size: 0.9em;">-</span></div>
                 <hr>
                 <div style="font-size: 0.9em;">
-                    <strong>Raw JSON:</strong>
-                    <pre id="jsonOutput" style="margin-top: 5px;"></pre>
+                    <details>
+                        <summary>Raw JSON</summary>
+                        <pre id="jsonOutput" style="margin-top: 5px;"></pre>
+                    </details>
                 </div>
             </div>
         </div>
@@ -448,72 +534,74 @@
         const timeTaken = document.getElementById('timeTaken');
         const reasonsList = document.getElementById('reasonsList');
 
+        // Panels
+        const panelMain = document.getElementById('panel-main');
+        const panelBill = document.getElementById('panel-bill');
+        const settingsDetails = document.querySelector('details'); // The first one is settings
+
         let currentFile = null;
+        let currentMode = 'MAIN'; // 'MAIN' or 'BILL'
+
+        function switchMode(mode) {
+            currentMode = mode;
+
+            // Buttons
+            const btnMain = document.getElementById('btn-mode-main');
+            const btnBill = document.getElementById('btn-mode-bill');
+
+            if (mode === 'MAIN') {
+                btnMain.style.background = '#2c3e50'; btnMain.style.color = 'white';
+                btnBill.style.background = '#e2e8f0'; btnBill.style.color = '#4a5568';
+                panelMain.style.display = 'block';
+                panelBill.style.display = 'none';
+                settingsDetails.style.display = 'block'; // Show advanced settings for Main
+            } else {
+                btnMain.style.background = '#e2e8f0'; btnMain.style.color = '#4a5568';
+                btnBill.style.background = '#2c3e50'; btnBill.style.color = 'white';
+                panelMain.style.display = 'none';
+                panelBill.style.display = 'block';
+                settingsDetails.style.display = 'none'; // Hide advanced settings for Bill
+            }
+
+            // hide previous results if any to avoid confusion
+            resultContent.style.display = 'none';
+            introText.style.display = 'block';
+        }
 
         // --- Event Listeners ---
-
-        // 1. Click to browse
         dropZone.addEventListener('click', () => fileInput.click());
-
-        // 2. File Input Change
-        fileInput.addEventListener('change', function () {
-            if (this.files[0]) handleFile(this.files[0]);
-        });
-
-        // 3. Drag & Drop
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
+        fileInput.addEventListener('change', function () { if (this.files[0]) handleFile(this.files[0]); });
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
         dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
         dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            if (e.dataTransfer.files[0]) {
-                handleFile(e.dataTransfer.files[0]);
-            }
+            e.preventDefault(); dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
         });
-
-        // 4. Paste Board (Ctrl + V)
         document.addEventListener('paste', (e) => {
             const items = e.clipboardData.items;
             for (let i = 0; i < items.length; i++) {
                 if (items[i].type.indexOf('image') !== -1) {
-                    const file = items[i].getAsFile();
-                    handleFile(file);
-                    break;
+                    handleFile(items[i].getAsFile()); break;
                 }
             }
         });
 
-        // --- Functions ---
-
         function handleFile(file) {
-            if (!file.type.startsWith('image/')) {
-                alert("Only images are allowed!");
-                return;
-            }
+            if (!file.type.startsWith('image/')) { alert("Only images are allowed!"); return; }
             currentFile = file;
             const reader = new FileReader();
             reader.onload = function (e) {
                 preview.src = e.target.result;
                 previewContainer.style.display = 'flex';
-                // Reset Results
                 resultContent.style.display = 'none';
-
-                // Auto trigger check
                 uploadImage();
             }
             reader.readAsDataURL(file);
         }
 
         async function uploadImage() {
-            if (!currentFile) {
-                alert("Please select or paste an image first!");
-                return;
-            }
+            if (!currentFile) { alert("Please select image!"); return; }
 
-            // UI Loading state
             loader.style.display = 'block';
             introText.style.display = 'none';
             resultContent.style.display = 'none';
@@ -523,140 +611,118 @@
             const formData = new FormData();
             formData.append('file', currentFile);
 
-            // Add custom thresholds
-            const syntheticThresh = document.getElementById('synthetic-thresh').value;
-            const entropyThresh = document.getElementById('entropy-thresh').value;
-            const aiModel = document.getElementById('ai-model-select').value;
-
-            formData.append('custom_synthetic_thresh', syntheticThresh);
-            formData.append('custom_entropy_thresh', entropyThresh);
-            formData.append('custom_ai_model', aiModel);
-
             try {
-                const start = performance.now();
-                const response = await fetch('/api/check-image', { method: 'POST', body: formData });
+                let response;
+                if (currentMode === 'MAIN') {
+                    // MAIN CHECKER
+                    const syntheticThresh = document.getElementById('synthetic-thresh').value;
+                    const entropyThresh = document.getElementById('entropy-thresh').value;
+                    const aiModel = document.getElementById('ai-model-select').value;
+                    formData.append('custom_synthetic_thresh', syntheticThresh);
+                    formData.append('custom_entropy_thresh', entropyThresh);
+                    formData.append('custom_ai_model', aiModel);
+
+                    response = await fetch('/api/check-image', { method: 'POST', body: formData });
+                } else {
+                    // BILL CHECKER
+                    response = await fetch('/api/check-bill-menu', { method: 'POST', body: formData });
+                }
+
                 const data = await response.json();
 
-                // Render Result
                 loader.style.display = 'none';
                 resultContent.style.display = 'block';
                 uploadBtn.disabled = false;
                 uploadBtn.innerText = "Check Image";
 
-                // Decision & Color
-                const decision = data.decision || "UNKNOWN";
-                decisionLine.className = 'status ' + decision;
-                decisionLine.textContent = `DECISION: ${decision} (${data.allowed ? 'ALLOWED' : 'BLOCKED'})`;
-
-                // --- Level 0: Quality Check ---
-                const lvl0Res = document.getElementById('lvl0-res');
-                const lvl0Detail = document.getElementById('lvl0-detail');
-                const blurScore = data.scores.blur_score !== undefined ? data.scores.blur_score : -1;
-                const minSide = data.scores.min_side !== undefined ? data.scores.min_side : -1;
-
-                // Determine if L0 failed based on reasons
-                const l0Failed = data.reasons.some(r =>
-                    r.includes("BLURRY") || r.includes("RESOLUTION") || r.includes("SIZE") || r.includes("SOLID") || r.includes("DARK") || r.includes("BRIGHT")
-                );
-
-                if (minSide !== -1) {
-                    lvl0Res.textContent = l0Failed ? "FAILED" : "PASSED";
-
-                    let details = [];
-                    if (blurScore !== -1) details.push(`Blur Score: ${blurScore.toFixed(1)}`);
-                    details.push(`Res: ${data.meta.width}x${data.meta.height}`);
-
-                    lvl0Detail.textContent = details.join(' | ');
-                } else {
-                    lvl0Res.textContent = "Skipped";
-                    lvl0Detail.textContent = "-";
-                }
-
-                // --- Level 1: Style Detector ---
-                const artProb = data.scores.art_prob !== undefined ? data.scores.art_prob : -1;
-                const l1Error = data.scores.l1_error; // L1 is now Style
-
-                const lvl2Res = document.getElementById('lvl2-res');
-                const lvl2Detail = document.getElementById('lvl2-detail');
-
-                if (artProb !== -1) {
-                    const isArt = artProb > 0.8;
-                    lvl2Res.textContent = isArt ? "ILLUSTRATION" : "PHOTO";
-                    lvl2Detail.textContent = `Art: ${(artProb * 100).toFixed(1)}% | Photo: ${(100 - artProb * 100).toFixed(1)}%`;
-                } else {
-                    lvl2Res.textContent = "Error / Skipped";
-                    lvl2Detail.textContent = l1Error ? l1Error : "Model did not run";
-                }
-
-                // --- Level 2: AI Detector ---
-                const aiProb = data.scores.ai_prob !== undefined ? data.scores.ai_prob : -1;
-                const humanProb = data.scores.human_prob !== undefined ? data.scores.human_prob : -1;
-                const l2Error = data.scores.l2_error; // L2 is now AI
-
-                const lvl1Res = document.getElementById('lvl1-res');
-                const lvl1Detail = document.getElementById('lvl1-detail');
-
-                if (aiProb !== -1) {
-                    const isAi = aiProb > 0.9;
-                    const diff = data.scores.ensemble_diff;
-
-                    if (diff !== undefined) {
-                        // Ensemble Mode
-                        if (diff > 0.4) {
-                            lvl1Res.textContent = "UNCERTAIN";
-                            lvl1Detail.textContent = `High Disagreement (${diff.toFixed(2)}) - Flagged for Review`;
-                        } else {
-                            lvl1Res.textContent = isAi ? "AI GENERATED" : "HUMAN / REAL";
-                            lvl1Detail.textContent = `Ensemble Avg: ${(aiProb * 100).toFixed(1)}% | Diff: ${diff.toFixed(2)}`;
-                        }
-                    } else {
-                        // Single Model
-                        lvl1Res.textContent = isAi ? "AI GENERATED" : "HUMAN / REAL";
-                        lvl1Detail.textContent = `AI: ${(aiProb * 100).toFixed(1)}% | Human: ${(humanProb * 100).toFixed(1)}%`;
-                    }
-                } else {
-                    lvl1Res.textContent = "Error / Skipped";
-                    lvl1Detail.textContent = l2Error ? l2Error : "Model did not run";
-                }
-
-                // --- Level 3: Trust & Heuristics ---
-                const trustMode = data.scores.trust_mode || "NEUTRAL";
-                const lvl3Res = document.getElementById('lvl3-res');
-                const lvl3Detail = document.getElementById('lvl3-detail');
-
-                lvl3Res.textContent = trustMode;
-                // Color removed
-
-                // Show specific heuristics if any
-                const heuristics = data.reasons.filter(r => !r.startsWith("AI_") && !r.startsWith("ILLUST"));
-                lvl3Detail.textContent = heuristics.length > 0 ? heuristics.join(", ") : "Clean";
-
-
-                // Reasons (All)
-                if (data.reasons && data.reasons.length > 0) {
-                    reasonsList.innerHTML = data.reasons.map(r => `<span class="badge">${r}</span>`).join(' ');
-                } else {
-                    reasonsList.textContent = "None (Clean)";
-                }
-
-                // JSON
+                // Common Meta
                 jsonOutput.textContent = JSON.stringify(data, null, 2);
+                if (data.meta && data.meta.elapsed_ms) timeTaken.textContent = data.meta.elapsed_ms;
 
-                // Timing
-                if (data.meta && data.meta.elapsed_ms) {
-                    timeTaken.textContent = data.meta.elapsed_ms;
+                if (currentMode === 'MAIN') {
+                    renderMainResults(data);
                 } else {
-                    timeTaken.textContent = 0;
+                    renderBillResults(data);
                 }
 
             } catch (error) {
                 console.error("Error:", error);
                 loader.style.display = 'none';
-                introText.style.display = 'block';
-                introText.innerText = "Error checking image. Check console.";
+                alert("Error checking image");
                 uploadBtn.disabled = false;
                 uploadBtn.innerText = "Check Image";
             }
+        }
+
+        function renderMainResults(data) {
+            const decision = data.decision || "UNKNOWN";
+            decisionLine.className = 'status ' + decision;
+            decisionLine.textContent = `DECISION: ${decision} (${data.allowed ? 'ALLOWED' : 'BLOCKED'})`;
+
+            // --- Level 0 ---
+            const lvl0Res = document.getElementById('lvl0-res');
+            const lvl0Detail = document.getElementById('lvl0-detail');
+            const blurScore = data.scores.blur_score !== undefined ? data.scores.blur_score : -1;
+            const minSide = data.scores.min_side !== undefined ? data.scores.min_side : -1;
+            const l0Failed = data.reasons.some(r => r.includes("BLURRY") || r.includes("RESOLUTION") || r.includes("SIZE"));
+
+            if (minSide !== -1) {
+                lvl0Res.textContent = l0Failed ? "FAILED" : "PASSED";
+                lvl0Detail.textContent = `Blur: ${blurScore.toFixed(1)} | Res: ${data.meta.width}x${data.meta.height}`;
+            } else {
+                lvl0Res.textContent = "Skipped"; lvl0Detail.textContent = "-";
+            }
+
+            // --- Level 1 (Style) ---
+            const artProb = data.scores.art_prob !== undefined ? data.scores.art_prob : -1;
+            document.getElementById('lvl2-res').textContent = artProb !== -1 ? (artProb > 0.8 ? "ILLUSTRATION" : "PHOTO") : "Error";
+            document.getElementById('lvl2-detail').textContent = artProb !== -1 ? `Art: ${(artProb * 100).toFixed(1)}%` : "-";
+
+            // --- Level 2 (AI) ---
+            const aiProb = data.scores.ai_prob !== undefined ? data.scores.ai_prob : -1;
+            document.getElementById('lvl1-res').textContent = aiProb !== -1 ? (aiProb > 0.9 ? "AI GENERATED" : "HUMAN") : "Error";
+            document.getElementById('lvl1-detail').textContent = aiProb !== -1 ? `AI: ${(aiProb * 100).toFixed(1)}%` : "-";
+
+            // --- Level 3 ---
+            document.getElementById('lvl3-res').textContent = data.scores.trust_mode || "NEUTRAL";
+            document.getElementById('lvl3-detail').textContent = "-";
+
+            // Reasons
+            if (data.reasons && data.reasons.length > 0) {
+                reasonsList.innerHTML = data.reasons.map(r => `<span class="badge">${r}</span>`).join(' ');
+            } else {
+                reasonsList.textContent = "None (Clean)";
+            }
+        }
+
+        function renderBillResults(data) {
+            const pred = data.prediction || "UNKNOWN";
+            let status = "BLOCKED";
+            let statusClass = "HARD_BLOCK"; // Red
+
+            if (pred === "BILL/INVOICE" || pred === "MENU") {
+                status = "ALLOWED";
+                statusClass = "ALLOW"; // Green
+            }
+
+            decisionLine.className = 'status ' + statusClass;
+            decisionLine.textContent = `DECISION: ${status} (${pred})`; // e.g. ALLOWED (BILL/INVOICE)
+
+            // Desc
+            document.getElementById('bill-prediction-desc').textContent = `Detected Content: ${pred}`;
+
+            // Scores
+            document.getElementById('score-bill').textContent = data.scores.receipt_invoice ? (data.scores.receipt_invoice * 100).toFixed(1) + '%' : '-';
+            document.getElementById('score-menu').textContent = data.scores.restaurant_menu ? (data.scores.restaurant_menu * 100).toFixed(1) + '%' : '-';
+            document.getElementById('score-contract').textContent = data.scores.contract_document ? (data.scores.contract_document * 100).toFixed(1) + '%' : '-';
+            document.getElementById('score-other').textContent = data.scores.normal_photo ? (data.scores.normal_photo * 100).toFixed(1) + '%' : '-';
+
+            const fakeScore = data.scores.fake_probability;
+            document.getElementById('score-fake').textContent = fakeScore !== undefined ? (fakeScore * 100).toFixed(1) + '%' : 'N/A';
+
+            // Reasons (usually empty for Bill checker, but if we add logic later)
+            // For now clear it
+            reasonsList.textContent = "See scores above.";
         }
     </script>
 </body>

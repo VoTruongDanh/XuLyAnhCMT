@@ -213,3 +213,45 @@ def root():
     if os.path.exists("ui/index.html"):
         return FileResponse("ui/index.html")
     return {"message": "Image Checker API. Go to /ui to test."}
+
+@app.get("/bill-menu")
+async def get_bill_menu_page():
+    return FileResponse("ui/bill_menu.html")
+
+@app.post("/api/check-bill-menu")
+async def check_bill_menu_endpoint(file: UploadFile = File(...)):
+    from app.pipeline.bill_menu import check_bill_menu
+    from PIL import Image
+    import io
+    
+    try:
+        content = await file.read()
+        image = Image.open(io.BytesIO(content)).convert("RGB")
+        width, height = image.size
+        file_size = len(content)
+        
+        prediction, scores = check_bill_menu(image)
+        
+        # Determine Allowed/Blocked
+        is_allowed = prediction in ["BILL/INVOICE", "MENU"]
+        
+        return {
+            "allowed": is_allowed,
+            "decision": prediction,
+            "scores": scores,
+            "meta": {
+                "width": width,
+                "height": height,
+                "format": "image/jpeg", # Converted to RGB, processed as PIL
+                "filesize": file_size
+            }
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+
