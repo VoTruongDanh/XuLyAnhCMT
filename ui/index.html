@@ -226,7 +226,7 @@
 
             <!-- Advanced Settings -->
             <details style="margin-top: 15px; border: 1px solid #ddd; padding: 10px; border-radius: 8px;">
-                <summary style="cursor: pointer; font-weight: bold;">⚙️ Advanced Thresholds (Tùy chỉnh ngưỡng)</summary>
+                <summary style="cursor: pointer; font-weight: bold;">Advanced Thresholds (Tùy chỉnh ngưỡng)</summary>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
 
                     <!-- Synthetic Threshold -->
@@ -460,10 +460,14 @@
                     r.includes("BLURRY") || r.includes("RESOLUTION") || r.includes("SIZE") || r.includes("SOLID") || r.includes("DARK") || r.includes("BRIGHT")
                 );
 
-                if (blurScore !== -1) {
+                if (minSide !== -1) {
                     lvl0Res.textContent = l0Failed ? "FAILED" : "PASSED";
-                    // lvl0Res.style.color = l0Failed ? "#dc3545" : "#28a745"; // Keep neutral as requested
-                    lvl0Detail.textContent = `Blur Score: ${blurScore.toFixed(1)} | Res: ${data.meta.width}x${data.meta.height}`;
+
+                    let details = [];
+                    if (blurScore !== -1) details.push(`Blur Score: ${blurScore.toFixed(1)}`);
+                    details.push(`Res: ${data.meta.width}x${data.meta.height}`);
+
+                    lvl0Detail.textContent = details.join(' | ');
                 } else {
                     lvl0Res.textContent = "Skipped";
                     lvl0Detail.textContent = "-";
