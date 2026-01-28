@@ -4,7 +4,7 @@ class Config:
     
     # Blur detection (Variance of Laplacian)
     # < this value => HARD_BLOCK
-    BLUR_THRESHOLD = 60.0 # Lowered from 100 to allow slightly soft focus (selfies)
+    BLUR_THRESHOLD = 50.0 # Lowered to 50 to allow softer focus images
 
     # Solid Color detection (Standard Deviation of pixels)
     # < this value => HARD_BLOCK
@@ -25,7 +25,7 @@ class Config:
     # File size
     MIN_FILE_SIZE_KB = 10 # Lowered to 10KB
 
-    # --- LEVEL 1 THRESHOLDS ---
+    # --- LEVEL 3 THRESHOLDS ---
     # Text heavy
     TEXT_SCORE_THRESHOLD = 0.35 # Relaxed from 0.25 back to 0.35
     

@@ -267,10 +267,72 @@
             <div id="resultContent" style="display:none;">
                 <div id="decisionLine" class="status"></div>
                 <div class="time">Latency: <span id="timeTaken">0</span> ms</div>
+
+                <!-- Level Breakdown -->
+                <div style="margin: 15px 0; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
+
+                    <!-- Level 0 -->
+                    <div
+                        style="padding: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <strong style="color: #555;">Level 0: Quality Check</strong>
+                            <div style="font-size: 0.85em; color: #888;">Basic validty: Blur, Size, Resolution, etc.
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div id="lvl0-res" style="font-weight: bold;">-</div>
+                            <div id="lvl0-detail" style="font-size: 0.8em; color: #888;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Level 1 -->
+                    <div
+                        style="padding: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <strong style="color: #555;">Level 1: AI Detector</strong>
+                            <div style="font-size: 0.85em; color: #888;">Detects AI-generated images (vs Human photos).
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div id="lvl1-res" style="font-weight: bold;">-</div>
+                            <div id="lvl1-detail" style="font-size: 0.8em; color: #888;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Level 2 -->
+                    <div
+                        style="padding: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <strong style="color: #555;">Level 2: Style Detector</strong>
+                            <div style="font-size: 0.85em; color: #888;">Detects Illustrations/Anime (vs Real Photos).
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div id="lvl2-res" style="font-weight: bold;">-</div>
+                            <div id="lvl2-detail" style="font-size: 0.8em; color: #888;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Level 3 -->
+                    <div style="padding: 10px; display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <strong style="color: #555;">Level 3: Trust & Heuristics</strong>
+                            <div style="font-size: 0.85em; color: #888;">Checks Metadata, Memes, Screenshots, etc.</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div id="lvl3-res" style="font-weight: bold;">-</div>
+                            <div id="lvl3-detail" style="font-size: 0.8em; color: #888;"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <hr>
                 <div><strong>Reasons:</strong> <span id="reasonsList" style="font-size: 0.9em;">-</span></div>
                 <hr>
-                <pre id="jsonOutput"></pre>
+                <div style="font-size: 0.9em;">
+                    <strong>Raw JSON:</strong>
+                    <pre id="jsonOutput" style="margin-top: 5px;"></pre>
+                </div>
             </div>
         </div>
     </div>
@@ -387,7 +449,75 @@
                 decisionLine.className = 'status ' + decision;
                 decisionLine.textContent = `DECISION: ${decision} (${data.allowed ? 'ALLOWED' : 'BLOCKED'})`;
 
-                // Reasons
+                // --- Level 0: Quality Check ---
+                const lvl0Res = document.getElementById('lvl0-res');
+                const lvl0Detail = document.getElementById('lvl0-detail');
+                const blurScore = data.scores.blur_score !== undefined ? data.scores.blur_score : -1;
+                const minSide = data.scores.min_side !== undefined ? data.scores.min_side : -1;
+
+                // Determine if L0 failed based on reasons
+                const l0Failed = data.reasons.some(r =>
+                    r.includes("BLURRY") || r.includes("RESOLUTION") || r.includes("SIZE") || r.includes("SOLID") || r.includes("DARK") || r.includes("BRIGHT")
+                );
+
+                if (blurScore !== -1) {
+                    lvl0Res.textContent = l0Failed ? "FAILED" : "PASSED";
+                    // lvl0Res.style.color = l0Failed ? "#dc3545" : "#28a745"; // Keep neutral as requested
+                    lvl0Detail.textContent = `Blur Score: ${blurScore.toFixed(1)} | Res: ${data.meta.width}x${data.meta.height}`;
+                } else {
+                    lvl0Res.textContent = "Skipped";
+                    lvl0Detail.textContent = "-";
+                }
+
+                // --- Level 1: AI Detector ---
+                const aiProb = data.scores.ai_prob !== undefined ? data.scores.ai_prob : -1;
+                const humanProb = data.scores.human_prob !== undefined ? data.scores.human_prob : -1;
+                const l1Error = data.scores.l1_error;
+
+                const lvl1Res = document.getElementById('lvl1-res');
+                const lvl1Detail = document.getElementById('lvl1-detail');
+
+                if (aiProb !== -1) {
+                    const isAi = aiProb > 0.9;
+                    lvl1Res.textContent = isAi ? "AI GENERATED" : "HUMAN / REAL";
+                    // Color removed
+                    lvl1Detail.textContent = `AI: ${(aiProb * 100).toFixed(1)}% | Human: ${(humanProb * 100).toFixed(1)}%`;
+                } else {
+                    lvl1Res.textContent = "Error / Skipped";
+                    lvl1Detail.textContent = l1Error ? l1Error : "Model did not run";
+                }
+
+                // --- Level 2: Style Detector ---
+                const artProb = data.scores.art_prob !== undefined ? data.scores.art_prob : -1;
+                const l2Error = data.scores.l2_error;
+
+                const lvl2Res = document.getElementById('lvl2-res');
+                const lvl2Detail = document.getElementById('lvl2-detail');
+
+                if (artProb !== -1) {
+                    const isArt = artProb > 0.8;
+                    lvl2Res.textContent = isArt ? "ILLUSTRATION" : "PHOTO";
+                    // Color removed
+                    lvl2Detail.textContent = `Art: ${(artProb * 100).toFixed(1)}% | Photo: ${(100 - artProb * 100).toFixed(1)}%`;
+                } else {
+                    lvl2Res.textContent = "Error / Skipped";
+                    lvl2Detail.textContent = l2Error ? l2Error : "Model did not run";
+                }
+
+                // --- Level 3: Trust & Heuristics ---
+                const trustMode = data.scores.trust_mode || "NEUTRAL";
+                const lvl3Res = document.getElementById('lvl3-res');
+                const lvl3Detail = document.getElementById('lvl3-detail');
+
+                lvl3Res.textContent = trustMode;
+                // Color removed
+
+                // Show specific heuristics if any
+                const heuristics = data.reasons.filter(r => !r.startsWith("AI_") && !r.startsWith("ILLUST"));
+                lvl3Detail.textContent = heuristics.length > 0 ? heuristics.join(", ") : "Clean";
+
+
+                // Reasons (All)
                 if (data.reasons && data.reasons.length > 0) {
                     reasonsList.innerHTML = data.reasons.map(r => `<span class="badge">${r}</span>`).join(' ');
                 } else {

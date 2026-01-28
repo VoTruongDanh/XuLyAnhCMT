@@ -14,6 +14,8 @@ from app.config import settings
 from app.pipeline.common import load_image_from_bytes, resize_for_processing
 from app.pipeline.level0 import run_level0_checks
 from app.pipeline.level1 import run_level1_checks
+from app.pipeline.level2 import run_level2_checks
+from app.pipeline.level3 import run_level3_checks
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -116,7 +118,7 @@ async def check_image(
     # --- PIPELINE START ---
     
     try:
-        # Level 0 Checks
+        # 1. Level 0 Checks (Basic)
         l0_passed, l0_decision, l0_reasons, l0_scores = run_level0_checks(img_cv, width, height, filesize, filename=file.filename)
         
         all_scores = {**l0_scores}
@@ -132,8 +134,42 @@ async def check_image(
                 "meta": meta
             })
 
-        # Level 1 Checks
+        # 2. Level 1 Checks (AI Detection)
         l1_passed, l1_decision, l1_reasons, l1_scores = run_level1_checks(
+            img_cv, img_pil, filename=file.filename,
+            config_override=config_override
+        )
+        all_scores.update(l1_scores)
+        all_reasons.extend(l1_reasons)
+        
+        if l1_decision == "HARD_BLOCK":
+             return sanitize_start_recursive({
+                "allowed": False,
+                "decision": "HARD_BLOCK",
+                "reasons": all_reasons,
+                "scores": all_scores,
+                "meta": meta
+            })
+
+        # 3. Level 2 Checks (Style/Illustration Detection)
+        l2_passed, l2_decision, l2_reasons, l2_scores = run_level2_checks(
+            img_cv, img_pil, filename=file.filename,
+            config_override=config_override
+        )
+        all_scores.update(l2_scores)
+        all_reasons.extend(l2_reasons)
+        
+        if l2_decision == "HARD_BLOCK":
+             return sanitize_start_recursive({
+                "allowed": False,
+                "decision": "HARD_BLOCK",
+                "reasons": all_reasons,
+                "scores": all_scores,
+                "meta": meta
+            })
+
+        # 4. Level 3 Checks (Metadata/Heuristics/Trust)
+        l3_passed, l3_decision, l3_reasons, l3_scores = run_level3_checks(
             img_cv, 
             img_pil, 
             filename=file.filename or "", 
@@ -141,13 +177,13 @@ async def check_image(
             config_override=config_override
         )
         
-        all_scores.update(l1_scores)
-        all_reasons.extend(l1_reasons)
+        all_scores.update(l3_scores)
+        all_reasons.extend(l3_reasons)
         
         # Logic aggregation
-        if l1_decision == "HARD_BLOCK":
+        if l3_decision == "HARD_BLOCK":
             final_decision = "HARD_BLOCK"
-        elif l1_decision == "SOFT_BLOCK" and final_decision == "ALLOW":
+        elif l3_decision == "SOFT_BLOCK" and final_decision == "ALLOW":
             final_decision = "SOFT_BLOCK"
         
         is_allowed = (final_decision == "ALLOW")
