@@ -361,6 +361,16 @@
                                 Sensitivity)</option>
                             <option value="Nahrawy/AI-image-detector">Nahrawy/AI-image-detector (Alternative)</option>
                         </select>
+                        <small style="color:#718096; display:block; margin-top:5px">*Thay đổi sẽ áp dụng cho lần kiểm
+                            tra tiếp theo</small>
+
+                        <div style="margin-top: 15px; display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="require-exif" style="width:auto;">
+                            <label for="require-exif"
+                                style="font-weight:600; font-size: 0.9em; margin-bottom:0; cursor:pointer; color: #2d3748;">
+                                Bắt buộc có Exif (Chặn ảnh mạng/Download)
+                            </label>
+                        </div>
                     </div>
 
                     <span class="setting-note" style="grid-column: span 2;">
@@ -618,9 +628,12 @@
                     const syntheticThresh = document.getElementById('synthetic-thresh').value;
                     const entropyThresh = document.getElementById('entropy-thresh').value;
                     const aiModel = document.getElementById('ai-model-select').value;
+                    const requireExif = document.getElementById('require-exif').checked; // Checkbox
+
                     formData.append('custom_synthetic_thresh', syntheticThresh);
                     formData.append('custom_entropy_thresh', entropyThresh);
                     formData.append('custom_ai_model', aiModel);
+                    formData.append('custom_require_exif', requireExif); // Send boolean/string
 
                     response = await fetch('/api/check-image', { method: 'POST', body: formData });
                 } else {

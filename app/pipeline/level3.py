@@ -31,6 +31,13 @@ def run_level3_checks(img_cv, img_pil, filename="", file_format="", config_overr
     scores['has_exif'] = has_exif
     scores['entropy'] = float(entropy)
     
+    # [STRICT MODE] Metadata Requirement
+    require_exif = config_override.get('require_exif', False)
+    if require_exif and not has_exif:
+        decision = "HARD_BLOCK"
+        reasons.append("MISSING_EXIF_METADATA_WEB_IMAGE")
+        return False, decision, reasons, scores
+    
     is_trusted_photo = False
     if n_faces > 0:
         is_trusted_photo = True # Face detected = likely real

@@ -66,7 +66,8 @@ async def check_image(
     file: UploadFile = File(...),
     custom_synthetic_thresh: float = Form(None),
     custom_entropy_thresh: float = Form(None),
-    custom_ai_model: str = Form(None)
+    custom_ai_model: str = Form(None),
+    custom_require_exif: str = Form(None) # Accepts "true"/"false" string from JS
 ):
     start_time = time.time()
     
@@ -78,6 +79,9 @@ async def check_image(
         config_override['entropy_thresh'] = custom_entropy_thresh
     if custom_ai_model is not None and custom_ai_model.strip() != "":
         config_override['ai_model'] = custom_ai_model.strip()
+    if custom_require_exif is not None:
+        # Convert string "true" to boolean
+        config_override['require_exif'] = custom_require_exif.lower() == 'true'
     
     # 1. Read file
     try:
@@ -253,5 +257,28 @@ async def check_bill_menu_endpoint(file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    import socket
+    
+    def get_local_ip():
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # doesn't even have to be reachable
+            s.connect(('10.255.255.255', 1))
+            IP = s.getsockname()[0]
+        except Exception:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        return IP
+
+    local_ip = get_local_ip()
+    port = 8000
+    
+    print("\n" + "="*40)
+    print(f"🚀 SERVER STARTED SUCCESSFULLY!")
+    print(f"👉 Local Access:   http://localhost:{port}")
+    print(f"👉 Network Access: http://{local_ip}:{port}")
+    print("="*40 + "\n")
+    
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
 

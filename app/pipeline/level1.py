@@ -58,7 +58,7 @@ def run_level1_checks(img_cv, img_pil, filename="", file_format="", config_overr
         
         # Threshold decision
         # If Art probability is overwhelmingly high
-        ART_THRESHOLD = 0.8 # Conservative. CLIP is usually very confident (0.99)
+        ART_THRESHOLD = 0.70 # Lowered from 0.8 to catch 78% cases
         
         if art_score > ART_THRESHOLD:
             reasons.append(f"ILLUSTRATION_OR_ARTWORK ({round(art_score*100)}%)")
