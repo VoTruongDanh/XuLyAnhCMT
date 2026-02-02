@@ -515,6 +515,25 @@
                             <div class="score-label">Fake/Edited</div>
                         </div>
                     </div>
+
+                    <!-- Forensic Actions -->
+                    <div style="margin-top:25px; text-align:center; border-top:1px solid #eee; padding-top:15px;">
+                        <button id="btn-ela" onclick="runForensicScan()" class="btn-check"
+                            style="background:#4a5568; width:auto; font-size: 0.9em; display:inline-block; margin-bottom:0;">
+                            🔍 Forensic Scan (ELA)
+                        </button>
+                    </div>
+
+                    <div id="ela-container"
+                        style="display:none; margin-top:15px; background:#fff; border:1px solid #e2e8f0; padding:15px; border-radius:8px;">
+                        <h4 style="margin:0 0 10px 0; color:#2d3748; font-size:1em;">Error Level Analysis (ELA)</h4>
+                        <div style="font-size:0.85em; color:#718096; margin-bottom:10px; line-height:1.4;">
+                            Bản đồ nhiệt bên dưới hiển thị sự khác biệt về mức độ nén.
+                            <br><b>Vùng sáng nổi bật</b> (khác biệt với nền) có thể là dấu hiệu chỉnh sửa.
+                        </div>
+                        <img id="ela-result-img"
+                            style="max-width:100%; border:1px solid #cbd5e0; border-radius:4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    </div>
                 </div>
 
                 <hr>
@@ -709,7 +728,7 @@
         }
 
         function renderBillResults(data) {
-            const pred = data.prediction || "UNKNOWN";
+            const pred = data.decision || "UNKNOWN";
             let status = "BLOCKED";
             let statusClass = "HARD_BLOCK"; // Red
 
@@ -736,6 +755,44 @@
             // Reasons (usually empty for Bill checker, but if we add logic later)
             // For now clear it
             reasonsList.textContent = "See scores above.";
+        }
+
+        async function runForensicScan() {
+            if (!currentFile) {
+                alert("Please check an image first!");
+                return;
+            }
+
+            const btn = document.getElementById('btn-ela');
+            const container = document.getElementById('ela-container');
+            const img = document.getElementById('ela-result-img');
+
+            btn.disabled = true;
+            const originalText = btn.innerText;
+            btn.innerText = "Scanning...";
+
+            const formData = new FormData();
+            formData.append('file', currentFile);
+
+            try {
+                const res = await fetch('/api/analyze-ela', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.ela_image) {
+                    img.src = data.ela_image;
+                    container.style.display = 'block';
+                    // Scroll to result
+                    container.scrollIntoView({ behavior: "smooth" });
+                } else {
+                    alert("ELA Failed: " + (data.error || "Unknown error"));
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error running ELA scan");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
         }
     </script>
 </body>

@@ -85,15 +85,27 @@ def check_bill_menu(img_pil):
         try:
             fake_results = fake_pipe(img_pil)
             # Result is list of dicts: [{'label': 'Fake', 'score': 0.9}, {'label': 'Real', 'score': 0.1}]
-            # Need to find "Fake" score.
             fake_score = 0.0
             for res in fake_results:
-                if res['label'].lower() == 'fake':
-                    fake_score = res['score']
-                    break
+                lbl = res['label'].lower()
+                scr = res['score']
+                print(f"DEBUG: Label='{lbl}' Score={scr}")
+                
+                # Check for various "Fake" labels
+                if "fake" in lbl or "ai" in lbl or "edit" in lbl or "artificial" in lbl:
+                    fake_score = scr
+                # If Realism is low, implies Fake? Better to stick to positive fake identification first.
+                # If the label is "Realism" and score is low, that helps but usually there's a counterpart.
             
+            # Fallback if no specific "fake" label found but we have "realism"
+            if fake_score == 0.0:
+                 for res in fake_results:
+                     if "real" in res['label'].lower():
+                         # if Real is 0.4, Fake is 0.6
+                         fake_score = 1.0 - res['score']
+
             scores['fake_probability'] = fake_score
-            print(f"Fake Score: {fake_score}")
+            print(f"Final Fake Score: {fake_score}")
             
             if fake_score > 0.6: # Threshold for Photoshop/Fake
                 prediction = "FAKE_EDITED"

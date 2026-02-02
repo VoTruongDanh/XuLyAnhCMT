@@ -255,6 +255,34 @@ async def check_bill_menu_endpoint(file: UploadFile = File(...)):
         traceback.print_exc()
         return {"error": str(e)}
 
+@app.post("/api/analyze-ela")
+async def analyze_ela_endpoint(file: UploadFile = File(...)):
+    from app.pipeline.forensics import perform_ela
+    from PIL import Image
+    import io
+    import base64
+    
+    try:
+        content = await file.read()
+        image = Image.open(io.BytesIO(content)).convert("RGB")
+        
+        # Run ELA
+        ela_img, stats = perform_ela(image)
+        
+        # Convert to Base64
+        buffered = io.BytesIO()
+        ela_img.save(buffered, format="PNG")
+        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        
+        return {
+            "ela_image": f"data:image/png;base64,{img_str}",
+            "stats": stats
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
 if __name__ == "__main__":
     import uvicorn
     import socket
